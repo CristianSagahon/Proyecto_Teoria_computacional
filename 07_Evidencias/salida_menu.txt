@@ -1,0 +1,789 @@
+
+╭────────────────────────────────────────────────────────────────────────╮
+│                  ANALIZADOR DE REDES MEDIANTE GRAFOS                   │
+│               Proyecto 4 · Teoría Computacional · UPSLP                │
+╰────────────────────────────────────────────────────────────────────────╯
+  Red:   ✖ sin cargar  → empieza con la opción 1
+  Pings: — sin procesar (opción 7)
+
+  📂 ARCHIVO
+     [1]  Cargar red desde archivo
+
+  🌐 ANÁLISIS DEL GRAFO
+     [2]  Ver equipos y conexiones (V, E)  (carga una red primero)
+     [3]  ¿Hay camino entre dos equipos? (BFS)  (carga una red primero)
+     [4]  Camino más rápido (Dijkstra)  (carga una red primero)
+     [5]  Grados y equipos aislados  (carga una red primero)
+     [6]  Ciclos y puntos críticos  (carga una red primero)
+
+  📡 PINGS Y FALLAS
+     [7]  Procesar pings (¿quién está en Falla?)  (carga una red primero)
+     [8]  Simular fallas  (carga una red primero)
+
+  🤖 TEORÍA
+     [9]  AFN, subconjuntos y tabla del AFD
+    [10]  Derivación con la gramática  (carga una red primero)
+
+  🖼  IMÁGENES
+    [11]  Generar imágenes (Grafo, AFN, AFD, AP)
+
+     [0]  🚪 Salir
+  ────────────────────────────────────────────────────────────────────────
+  ➜ Escribe el número de una opción y da Enter: 
+┌────────────────────────────────────────────────────────────────────────
+│ 📂  1. CARGAR RED DESDE ARCHIVO
+└────────────────────────────────────────────────────────────────────────
+  ℹ  Lee el archivo y lo revisa con: regex (lexer) → autómata de pila → gramática (parser) → semántica.
+
+  ➜ Archivo de red (ej. ejemplos/invalido_peso.txt, Enter = ejemplos\red_ejemplo.txt):   Archivo: ejemplos\red_ejemplo.txt
+
+▸ Fase 1 · Análisis léxico: 49 tokens
+  ┌─────────┬──────────────┬────────┐
+  │ Lín:Col │ Tipo         │ Lexema │
+  ├─────────┼──────────────┼────────┤
+  │ 2:1     │ RED          │ RED    │
+  │ 2:5     │ LLAVE_ABRE   │ {      │
+  │ 3:3     │ ROUTER       │ ROUTER │
+  │ 3:10    │ ID           │ R1     │
+  │ 3:13    │ LLAVE_ABRE   │ {      │
+  │ 4:5     │ SWITCH       │ SWITCH │
+  │ 4:12    │ ID           │ SW1    │
+  │ 4:16    │ DOS_PUNTOS   │ :      │
+  │ 4:18    │ NUM          │ 5      │
+  │ 4:20    │ LLAVE_ABRE   │ {      │
+  │ 4:22    │ PC           │ PC     │
+  │ 4:25    │ ID           │ PC1    │
+  │ 4:29    │ DOS_PUNTOS   │ :      │
+  │ 4:31    │ NUM          │ 2      │
+  │ 4:33    │ PUNTO_Y_COMA │ ;      │
+  │ 4:35    │ PC           │ PC     │
+  │ 4:38    │ ID           │ PC2    │
+  │ 4:42    │ DOS_PUNTOS   │ :      │
+  │ 4:44    │ NUM          │ 2      │
+  │ 4:46    │ PUNTO_Y_COMA │ ;      │
+  │ 4:48    │ LLAVE_CIERRA │ }      │
+  │ 5:5     │ SWITCH       │ SWITCH │
+  │ 5:12    │ ID           │ SW2    │
+  │ 5:16    │ DOS_PUNTOS   │ :      │
+  │ 5:18    │ NUM          │ 4      │
+  │ 5:20    │ LLAVE_ABRE   │ {      │
+  │ 5:22    │ SERVER       │ SERVER │
+  │ 5:29    │ ID           │ SRV1   │
+  │ 5:34    │ DOS_PUNTOS   │ :      │
+  │ 5:36    │ NUM          │ 1      │
+  │ 5:38    │ PUNTO_Y_COMA │ ;      │
+  │ 5:40    │ LLAVE_CIERRA │ }      │
+  │ 6:3     │ LLAVE_CIERRA │ }      │
+  │ 7:3     │ DB           │ DB     │
+  │ 7:6     │ ID           │ DB1    │
+  │ 7:10    │ PUNTO_Y_COMA │ ;      │
+  │ 8:3     │ ENLACE       │ ENLACE │
+  │ 8:10    │ ID           │ PC2    │
+  │ 8:14    │ ID           │ DB1    │
+  │ 8:18    │ DOS_PUNTOS   │ :      │
+  │ 8:20    │ NUM          │ 3      │
+  │ 8:22    │ PUNTO_Y_COMA │ ;      │
+  │ 9:3     │ ENLACE       │ ENLACE │
+  │ 9:10    │ ID           │ SRV1   │
+  │ 9:15    │ ID           │ DB1    │
+  │ 9:19    │ DOS_PUNTOS   │ :      │
+  │ 9:21    │ NUM          │ 2      │
+  │ 9:23    │ PUNTO_Y_COMA │ ;      │
+  │ 10:1    │ LLAVE_CIERRA │ }      │
+  │ 11:1    │ FIN          │ $      │
+  └─────────┴──────────────┴────────┘
+
+▸ Fase 2 · Autómata de pila (pila con el tope a la izquierda)
+  ┌──────┬─────────┬─────────────────────────────────────────┬──────────┐
+  │ Paso │ Símbolo │ Transición aplicada                     │ Pila     │
+  ├──────┼─────────┼─────────────────────────────────────────┼──────────┤
+  │ 0    │ -       │ configuración inicial (q0, Z0)          │ Z0       │
+  │ 1    │ RED     │ δ(q0, RED, Z0) = (q0, Z0)   sin cambio  │ Z0       │
+  │ 2    │ {       │ δ(q0, {, Z0) = (q0, BZ0)   push B       │ B Z0     │
+  │ 3    │ ROUTER  │ δ(q0, ROUTER, B) = (q0, B)   sin cambio │ B Z0     │
+  │ 4    │ R1      │ δ(q0, R1, B) = (q0, B)   sin cambio     │ B Z0     │
+  │ 5    │ {       │ δ(q0, {, B) = (q0, BB)   push B         │ B B Z0   │
+  │ 6    │ SWITCH  │ δ(q0, SWITCH, B) = (q0, B)   sin cambio │ B B Z0   │
+  │ 7    │ SW1     │ δ(q0, SW1, B) = (q0, B)   sin cambio    │ B B Z0   │
+  │ 8    │ :       │ δ(q0, :, B) = (q0, B)   sin cambio      │ B B Z0   │
+  │ 9    │ 5       │ δ(q0, 5, B) = (q0, B)   sin cambio      │ B B Z0   │
+  │ 10   │ {       │ δ(q0, {, B) = (q0, BB)   push B         │ B B B Z0 │
+  │ 11   │ PC      │ δ(q0, PC, B) = (q0, B)   sin cambio     │ B B B Z0 │
+  │ 12   │ PC1     │ δ(q0, PC1, B) = (q0, B)   sin cambio    │ B B B Z0 │
+  │ 13   │ :       │ δ(q0, :, B) = (q0, B)   sin cambio      │ B B B Z0 │
+  │ 14   │ 2       │ δ(q0, 2, B) = (q0, B)   sin cambio      │ B B B Z0 │
+  │ 15   │ ;       │ δ(q0, ;, B) = (q0, B)   sin cambio      │ B B B Z0 │
+  │ 16   │ PC      │ δ(q0, PC, B) = (q0, B)   sin cambio     │ B B B Z0 │
+  │ 17   │ PC2     │ δ(q0, PC2, B) = (q0, B)   sin cambio    │ B B B Z0 │
+  │ 18   │ :       │ δ(q0, :, B) = (q0, B)   sin cambio      │ B B B Z0 │
+  │ 19   │ 2       │ δ(q0, 2, B) = (q0, B)   sin cambio      │ B B B Z0 │
+  │ 20   │ ;       │ δ(q0, ;, B) = (q0, B)   sin cambio      │ B B B Z0 │
+  │ 21   │ }       │ δ(q0, }, B) = (q0, ε)   pop B           │ B B Z0   │
+  │ 22   │ SWITCH  │ δ(q0, SWITCH, B) = (q0, B)   sin cambio │ B B Z0   │
+  │ 23   │ SW2     │ δ(q0, SW2, B) = (q0, B)   sin cambio    │ B B Z0   │
+  │ 24   │ :       │ δ(q0, :, B) = (q0, B)   sin cambio      │ B B Z0   │
+  │ 25   │ 4       │ δ(q0, 4, B) = (q0, B)   sin cambio      │ B B Z0   │
+  │ 26   │ {       │ δ(q0, {, B) = (q0, BB)   push B         │ B B B Z0 │
+  │ 27   │ SERVER  │ δ(q0, SERVER, B) = (q0, B)   sin cambio │ B B B Z0 │
+  │ 28   │ SRV1    │ δ(q0, SRV1, B) = (q0, B)   sin cambio   │ B B B Z0 │
+  │ 29   │ :       │ δ(q0, :, B) = (q0, B)   sin cambio      │ B B B Z0 │
+  │ 30   │ 1       │ δ(q0, 1, B) = (q0, B)   sin cambio      │ B B B Z0 │
+  │ 31   │ ;       │ δ(q0, ;, B) = (q0, B)   sin cambio      │ B B B Z0 │
+  │ 32   │ }       │ δ(q0, }, B) = (q0, ε)   pop B           │ B B Z0   │
+  │ 33   │ }       │ δ(q0, }, B) = (q0, ε)   pop B           │ B Z0     │
+  │ 34   │ DB      │ δ(q0, DB, B) = (q0, B)   sin cambio     │ B Z0     │
+  │ 35   │ DB1     │ δ(q0, DB1, B) = (q0, B)   sin cambio    │ B Z0     │
+  │ 36   │ ;       │ δ(q0, ;, B) = (q0, B)   sin cambio      │ B Z0     │
+  │ 37   │ ENLACE  │ δ(q0, ENLACE, B) = (q0, B)   sin cambio │ B Z0     │
+  │ 38   │ PC2     │ δ(q0, PC2, B) = (q0, B)   sin cambio    │ B Z0     │
+  │ 39   │ DB1     │ δ(q0, DB1, B) = (q0, B)   sin cambio    │ B Z0     │
+  │ 40   │ :       │ δ(q0, :, B) = (q0, B)   sin cambio      │ B Z0     │
+  │ 41   │ 3       │ δ(q0, 3, B) = (q0, B)   sin cambio      │ B Z0     │
+  │ 42   │ ;       │ δ(q0, ;, B) = (q0, B)   sin cambio      │ B Z0     │
+  │ 43   │ ENLACE  │ δ(q0, ENLACE, B) = (q0, B)   sin cambio │ B Z0     │
+  │ 44   │ SRV1    │ δ(q0, SRV1, B) = (q0, B)   sin cambio   │ B Z0     │
+  │ 45   │ DB1     │ δ(q0, DB1, B) = (q0, B)   sin cambio    │ B Z0     │
+  │ 46   │ :       │ δ(q0, :, B) = (q0, B)   sin cambio      │ B Z0     │
+  │ 47   │ 2       │ δ(q0, 2, B) = (q0, B)   sin cambio      │ B Z0     │
+  │ 48   │ ;       │ δ(q0, ;, B) = (q0, B)   sin cambio      │ B Z0     │
+  │ 49   │ }       │ δ(q0, }, B) = (q0, ε)   pop B           │ Z0       │
+  │ 50   │ ε       │ δ(q0, ε, Z0) = (qf, Z0)   ACEPTA        │ Z0       │
+  └──────┴─────────┴─────────────────────────────────────────┴──────────┘
+  ✔  Llaves balanceadas: el autómata de pila ACEPTA
+
+▸ Fase 3 · Parser (gramática libre de contexto)
+  ✔  Sintaxis correcta: 7 dispositivos y 2 ENLACE
+
+  ✔ RED ACEPTADA: 7 nodos y 7 aristas
+
+╭────────────────────────────────────────────────────────────────────────╮
+│                  ANALIZADOR DE REDES MEDIANTE GRAFOS                   │
+│               Proyecto 4 · Teoría Computacional · UPSLP                │
+╰────────────────────────────────────────────────────────────────────────╯
+  Red:   ✔ red_ejemplo.txt (7 equipos, 7 conexiones)
+  Pings: — sin procesar (opción 7)
+
+  📂 ARCHIVO
+     [1]  Cargar red desde archivo
+
+  🌐 ANÁLISIS DEL GRAFO
+     [2]  Ver equipos y conexiones (V, E)
+     [3]  ¿Hay camino entre dos equipos? (BFS)
+     [4]  Camino más rápido (Dijkstra)
+     [5]  Grados y equipos aislados
+     [6]  Ciclos y puntos críticos
+
+  📡 PINGS Y FALLAS
+     [7]  Procesar pings (¿quién está en Falla?)
+     [8]  Simular fallas
+
+  🤖 TEORÍA
+     [9]  AFN, subconjuntos y tabla del AFD
+    [10]  Derivación con la gramática
+
+  🖼  IMÁGENES
+    [11]  Generar imágenes (Grafo, AFN, AFD, AP)
+
+     [0]  🚪 Salir
+  ────────────────────────────────────────────────────────────────────────
+  ➜ Escribe el número de una opción y da Enter: 
+┌────────────────────────────────────────────────────────────────────────
+│ 🌐  2. EQUIPOS, CONEXIONES Y LISTA DE ADYACENCIA
+└────────────────────────────────────────────────────────────────────────
+  ℹ  V = vértices (equipos), E = aristas (conexiones con su latencia en ms).
+  V  (|V| = 7): {R1, SW1, PC1, PC2, SW2, SRV1, DB1}
+  E  (|E| = 7): {(R1,SW1,5), (R1,SW2,4), (SW1,PC1,2), (SW1,PC2,2), (PC2,DB1,3), (SW2,SRV1,1), (SRV1,DB1,2)}
+
+▸ Lista de adyacencia
+  ┌────────┬───────────────────────────────────┐
+  │ Equipo │ Conectado con                     │
+  ├────────┼───────────────────────────────────┤
+  │ R1     │ SW1 (5 ms), SW2 (4 ms)            │
+  │ SW1    │ R1 (5 ms), PC1 (2 ms), PC2 (2 ms) │
+  │ PC1    │ SW1 (2 ms)                        │
+  │ PC2    │ SW1 (2 ms), DB1 (3 ms)            │
+  │ SW2    │ R1 (4 ms), SRV1 (1 ms)            │
+  │ SRV1   │ SW2 (1 ms), DB1 (2 ms)            │
+  │ DB1    │ PC2 (3 ms), SRV1 (2 ms)           │
+  └────────┴───────────────────────────────────┘
+
+╭────────────────────────────────────────────────────────────────────────╮
+│                  ANALIZADOR DE REDES MEDIANTE GRAFOS                   │
+│               Proyecto 4 · Teoría Computacional · UPSLP                │
+╰────────────────────────────────────────────────────────────────────────╯
+  Red:   ✔ red_ejemplo.txt (7 equipos, 7 conexiones)
+  Pings: — sin procesar (opción 7)
+
+  📂 ARCHIVO
+     [1]  Cargar red desde archivo
+
+  🌐 ANÁLISIS DEL GRAFO
+     [2]  Ver equipos y conexiones (V, E)
+     [3]  ¿Hay camino entre dos equipos? (BFS)
+     [4]  Camino más rápido (Dijkstra)
+     [5]  Grados y equipos aislados
+     [6]  Ciclos y puntos críticos
+
+  📡 PINGS Y FALLAS
+     [7]  Procesar pings (¿quién está en Falla?)
+     [8]  Simular fallas
+
+  🤖 TEORÍA
+     [9]  AFN, subconjuntos y tabla del AFD
+    [10]  Derivación con la gramática
+
+  🖼  IMÁGENES
+    [11]  Generar imágenes (Grafo, AFN, AFD, AP)
+
+     [0]  🚪 Salir
+  ────────────────────────────────────────────────────────────────────────
+  ➜ Escribe el número de una opción y da Enter: 
+┌────────────────────────────────────────────────────────────────────────
+│ 🔎  3. ¿HAY CAMINO ENTRE DOS EQUIPOS? (BFS)
+└────────────────────────────────────────────────────────────────────────
+  ℹ  BFS recorre la red por niveles con una cola hasta encontrar el destino.
+  ℹ  Deja vacío y da Enter para regresar al menú.
+  Equipos de la red: R1, SW1, PC1, PC2, SW2, SRV1, DB1
+
+  ➜ Equipo de ORIGEN (ej. PC1, Enter = regresar al menú): 
+  ➜ Equipo de DESTINO (ej. DB1, Enter = regresar al menú): 
+  Orden de visita BFS: PC1 → SW1 → R1 → PC2 → SW2 → DB1
+  ✔  SÍ hay camino entre PC1 y DB1  (3 saltos)
+     PC1 → SW1 → PC2 → DB1
+
+╭────────────────────────────────────────────────────────────────────────╮
+│                  ANALIZADOR DE REDES MEDIANTE GRAFOS                   │
+│               Proyecto 4 · Teoría Computacional · UPSLP                │
+╰────────────────────────────────────────────────────────────────────────╯
+  Red:   ✔ red_ejemplo.txt (7 equipos, 7 conexiones)
+  Pings: — sin procesar (opción 7)
+
+  📂 ARCHIVO
+     [1]  Cargar red desde archivo
+
+  🌐 ANÁLISIS DEL GRAFO
+     [2]  Ver equipos y conexiones (V, E)
+     [3]  ¿Hay camino entre dos equipos? (BFS)
+     [4]  Camino más rápido (Dijkstra)
+     [5]  Grados y equipos aislados
+     [6]  Ciclos y puntos críticos
+
+  📡 PINGS Y FALLAS
+     [7]  Procesar pings (¿quién está en Falla?)
+     [8]  Simular fallas
+
+  🤖 TEORÍA
+     [9]  AFN, subconjuntos y tabla del AFD
+    [10]  Derivación con la gramática
+
+  🖼  IMÁGENES
+    [11]  Generar imágenes (Grafo, AFN, AFD, AP)
+
+     [0]  🚪 Salir
+  ────────────────────────────────────────────────────────────────────────
+  ➜ Escribe el número de una opción y da Enter: 
+┌────────────────────────────────────────────────────────────────────────
+│ ⚡  4. CAMINO MÁS RÁPIDO (DIJKSTRA)
+└────────────────────────────────────────────────────────────────────────
+  ℹ  Dijkstra encuentra la ruta con la MENOR latencia total (suma de ms).
+  ℹ  Deja vacío y da Enter para regresar al menú.
+  Equipos de la red: R1, SW1, PC1, PC2, SW2, SRV1, DB1
+
+  ➜ Equipo de ORIGEN (ej. PC1, Enter = regresar al menú): 
+  ➜ Equipo de DESTINO (ej. SRV1, Enter = regresar al menú): 
+▸ Pasos del algoritmo
+  ┌───┬──────────────────────────────────────────────┐
+  │ # │ Qué hizo                                     │
+  ├───┼──────────────────────────────────────────────┤
+  │ 1 │ Se fija PC1 (dist 0). Actualiza: SW1=2       │
+  │ 2 │ Se fija SW1 (dist 2). Actualiza: R1=7, PC2=4 │
+  │ 3 │ Se fija PC2 (dist 4). Actualiza: DB1=7       │
+  │ 4 │ Se fija R1 (dist 7). Actualiza: SW2=11       │
+  │ 5 │ Se fija DB1 (dist 7). Actualiza: SRV1=9      │
+  │ 6 │ Se fija SRV1 (dist 9). Actualiza: SW2=10     │
+  └───┴──────────────────────────────────────────────┘
+
+  ✔  Ruta más corta: 9 ms
+     PC1 → SW1 → PC2 → DB1 → SRV1
+
+▸ Todas las rutas posibles (DFS), de la más rápida a la más lenta
+  ┌──────────────────────────────┬──────────┐
+  │ Ruta                         │ Latencia │
+  ├──────────────────────────────┼──────────┤
+  │ PC1 → SW1 → PC2 → DB1 → SRV1 │ 9 ms     │
+  │ PC1 → SW1 → R1 → SW2 → SRV1  │ 12 ms    │
+  └──────────────────────────────┴──────────┘
+
+╭────────────────────────────────────────────────────────────────────────╮
+│                  ANALIZADOR DE REDES MEDIANTE GRAFOS                   │
+│               Proyecto 4 · Teoría Computacional · UPSLP                │
+╰────────────────────────────────────────────────────────────────────────╯
+  Red:   ✔ red_ejemplo.txt (7 equipos, 7 conexiones)
+  Pings: — sin procesar (opción 7)
+
+  📂 ARCHIVO
+     [1]  Cargar red desde archivo
+
+  🌐 ANÁLISIS DEL GRAFO
+     [2]  Ver equipos y conexiones (V, E)
+     [3]  ¿Hay camino entre dos equipos? (BFS)
+     [4]  Camino más rápido (Dijkstra)
+     [5]  Grados y equipos aislados
+     [6]  Ciclos y puntos críticos
+
+  📡 PINGS Y FALLAS
+     [7]  Procesar pings (¿quién está en Falla?)
+     [8]  Simular fallas
+
+  🤖 TEORÍA
+     [9]  AFN, subconjuntos y tabla del AFD
+    [10]  Derivación con la gramática
+
+  🖼  IMÁGENES
+    [11]  Generar imágenes (Grafo, AFN, AFD, AP)
+
+     [0]  🚪 Salir
+  ────────────────────────────────────────────────────────────────────────
+  ➜ Escribe el número de una opción y da Enter: 
+┌────────────────────────────────────────────────────────────────────────
+│ 🔢  5. GRADOS Y EQUIPOS AISLADOS
+└────────────────────────────────────────────────────────────────────────
+  ℹ  Grado = cuántas conexiones tiene un equipo. Grado 0 = aislado.
+  ┌────────┬───────┬─────────┐
+  │ Equipo │ Grado │ Gráfica │
+  ├────────┼───────┼─────────┤
+  │ R1     │ 2     │ ■■      │
+  │ SW1    │ 3     │ ■■■     │
+  │ PC1    │ 1     │ ■       │
+  │ PC2    │ 2     │ ■■      │
+  │ SW2    │ 2     │ ■■      │
+  │ SRV1   │ 2     │ ■■      │
+  │ DB1    │ 2     │ ■■      │
+  └────────┴───────┴─────────┘
+  Suma de grados: 14 = 2·|E| = 2·7  (lema del apretón de manos)
+  Mayor grado: 3  (SW1)
+  ✔  No hay equipos aislados
+
+╭────────────────────────────────────────────────────────────────────────╮
+│                  ANALIZADOR DE REDES MEDIANTE GRAFOS                   │
+│               Proyecto 4 · Teoría Computacional · UPSLP                │
+╰────────────────────────────────────────────────────────────────────────╯
+  Red:   ✔ red_ejemplo.txt (7 equipos, 7 conexiones)
+  Pings: — sin procesar (opción 7)
+
+  📂 ARCHIVO
+     [1]  Cargar red desde archivo
+
+  🌐 ANÁLISIS DEL GRAFO
+     [2]  Ver equipos y conexiones (V, E)
+     [3]  ¿Hay camino entre dos equipos? (BFS)
+     [4]  Camino más rápido (Dijkstra)
+     [5]  Grados y equipos aislados
+     [6]  Ciclos y puntos críticos
+
+  📡 PINGS Y FALLAS
+     [7]  Procesar pings (¿quién está en Falla?)
+     [8]  Simular fallas
+
+  🤖 TEORÍA
+     [9]  AFN, subconjuntos y tabla del AFD
+    [10]  Derivación con la gramática
+
+  🖼  IMÁGENES
+    [11]  Generar imágenes (Grafo, AFN, AFD, AP)
+
+     [0]  🚪 Salir
+  ────────────────────────────────────────────────────────────────────────
+  ➜ Escribe el número de una opción y da Enter: 
+┌────────────────────────────────────────────────────────────────────────
+│ 🔁  6. CICLOS Y PUNTOS CRÍTICOS
+└────────────────────────────────────────────────────────────────────────
+  ℹ  Ciclo = camino que regresa al inicio (hay rutas de respaldo).
+  ℹ  Punto crítico = equipo que si se cae, divide la red.
+  ✔  SÍ hay ciclos (DFS encontró una arista de retroceso): 1
+     R1 - SW1 - PC2 - DB1 - SRV1 - SW2 - R1
+
+▸ ¿Qué pasa si quito cada equipo?  (componentes ahora: 1)
+  ┌──────┬─────────────┬─────────────────────────────────────┬───────────┐
+  │ Sin  │ Componentes │ Grupos que quedan                   │ ¿Crítico? │
+  ├──────┼─────────────┼─────────────────────────────────────┼───────────┤
+  │ R1   │ 1           │ {SW1, PC1, PC2, DB1, SRV1, SW2}     │ ok        │
+  │ SW1  │ 2           │ {R1, SW2, SRV1, DB1, PC2}  |  {PC1} │ CRÍTICO   │
+  │ PC1  │ 1           │ {R1, SW1, SW2, PC2, SRV1, DB1}      │ ok        │
+  │ PC2  │ 1           │ {R1, SW1, SW2, PC1, SRV1, DB1}      │ ok        │
+  │ SW2  │ 1           │ {R1, SW1, PC1, PC2, DB1, SRV1}      │ ok        │
+  │ SRV1 │ 1           │ {R1, SW1, SW2, PC1, PC2, DB1}       │ ok        │
+  │ DB1  │ 1           │ {R1, SW1, SW2, PC1, PC2, SRV1}      │ ok        │
+  └──────┴─────────────┴─────────────────────────────────────┴───────────┘
+
+  ✖  Puntos críticos: SW1
+
+╭────────────────────────────────────────────────────────────────────────╮
+│                  ANALIZADOR DE REDES MEDIANTE GRAFOS                   │
+│               Proyecto 4 · Teoría Computacional · UPSLP                │
+╰────────────────────────────────────────────────────────────────────────╯
+  Red:   ✔ red_ejemplo.txt (7 equipos, 7 conexiones)
+  Pings: — sin procesar (opción 7)
+
+  📂 ARCHIVO
+     [1]  Cargar red desde archivo
+
+  🌐 ANÁLISIS DEL GRAFO
+     [2]  Ver equipos y conexiones (V, E)
+     [3]  ¿Hay camino entre dos equipos? (BFS)
+     [4]  Camino más rápido (Dijkstra)
+     [5]  Grados y equipos aislados
+     [6]  Ciclos y puntos críticos
+
+  📡 PINGS Y FALLAS
+     [7]  Procesar pings (¿quién está en Falla?)
+     [8]  Simular fallas
+
+  🤖 TEORÍA
+     [9]  AFN, subconjuntos y tabla del AFD
+    [10]  Derivación con la gramática
+
+  🖼  IMÁGENES
+    [11]  Generar imágenes (Grafo, AFN, AFD, AP)
+
+     [0]  🚪 Salir
+  ────────────────────────────────────────────────────────────────────────
+  ➜ Escribe el número de una opción y da Enter: 
+┌────────────────────────────────────────────────────────────────────────
+│ 📡  7. PROCESAR PINGS (¿QUIÉN ESTÁ EN FALLA?)
+└────────────────────────────────────────────────────────────────────────
+  ℹ  Cada ping se convierte en o (OK) o t (TIMEOUT) y la cadena entra al AFD.
+  ℹ  Si los 2 últimos pings son TIMEOUT, el AFD acepta → el equipo está en FALLA.
+
+  ➜ Archivo de pings (ej. ejemplos/pings_invalido.txt, Enter = ejemplos\pings_ejemplo.txt):   Archivo: ejemplos\pings_ejemplo.txt
+
+  ┌────────┬────────┬───────────────────────────────┬─────────┬──────────┐
+  │ Equipo │ Cadena │ Recorrido en el AFD           │ AFD     │ Estado   │
+  ├────────┼────────┼───────────────────────────────┼─────────┼──────────┤
+  │ R1     │ oo     │ A -o-> A -o-> A               │ rechaza │ ✔ Activo │
+  │ SW1    │ oott   │ A -o-> A -o-> A -t-> B -t-> C │ acepta  │ ✖ Falla  │
+  │ PC1    │ oto    │ A -o-> A -t-> B -o-> A        │ rechaza │ ✔ Activo │
+  │ PC2    │ tto    │ A -t-> B -t-> C -o-> A        │ rechaza │ ✔ Activo │
+  │ SW2    │ o      │ A -o-> A                      │ rechaza │ ✔ Activo │
+  │ SRV1   │ ot     │ A -o-> A -t-> B               │ rechaza │ ✔ Activo │
+  │ DB1    │ oo     │ A -o-> A -o-> A               │ rechaza │ ✔ Activo │
+  └────────┴────────┴───────────────────────────────┴─────────┴──────────┘
+
+  ⚠  En Falla: SW1  → usa la opción 8 para ver qué pasa con la red
+
+╭────────────────────────────────────────────────────────────────────────╮
+│                  ANALIZADOR DE REDES MEDIANTE GRAFOS                   │
+│               Proyecto 4 · Teoría Computacional · UPSLP                │
+╰────────────────────────────────────────────────────────────────────────╯
+  Red:   ✔ red_ejemplo.txt (7 equipos, 7 conexiones)
+  Pings: ✔ procesados · 1 en Falla (SW1)
+
+  📂 ARCHIVO
+     [1]  Cargar red desde archivo
+
+  🌐 ANÁLISIS DEL GRAFO
+     [2]  Ver equipos y conexiones (V, E)
+     [3]  ¿Hay camino entre dos equipos? (BFS)
+     [4]  Camino más rápido (Dijkstra)
+     [5]  Grados y equipos aislados
+     [6]  Ciclos y puntos críticos
+
+  📡 PINGS Y FALLAS
+     [7]  Procesar pings (¿quién está en Falla?)
+     [8]  Simular fallas
+
+  🤖 TEORÍA
+     [9]  AFN, subconjuntos y tabla del AFD
+    [10]  Derivación con la gramática
+
+  🖼  IMÁGENES
+    [11]  Generar imágenes (Grafo, AFN, AFD, AP)
+
+     [0]  🚪 Salir
+  ────────────────────────────────────────────────────────────────────────
+  ➜ Escribe el número de una opción y da Enter: 
+┌────────────────────────────────────────────────────────────────────────
+│ 💥  8. SIMULAR FALLAS
+└────────────────────────────────────────────────────────────────────────
+  ℹ  Se quitan del grafo los equipos en Falla y se revisa si la red se divide.
+  En Falla según el AFD: SW1
+  Equipos de la red: R1, SW1, PC1, PC2, SW2, SRV1, DB1
+
+  ➜ ¿Quitar otros equipos? Sepáralos con coma (ej. R1,DB1, Enter = no quitar más): 
+  Se quitan: SW1
+  Componentes: antes 1  →  después 2
+  ┌───────┬────────────────────────────────────────┐
+  │ Grupo │ Equipos que siguen conectados entre sí │
+  ├───────┼────────────────────────────────────────┤
+  │ 1     │ R1, SW2, SRV1, DB1, PC2                │
+  │ 2     │ PC1                                    │
+  └───────┴────────────────────────────────────────┘
+
+  ✖  ¡La red se DIVIDIÓ!
+  ✖  Quedaron sin conexión: PC1
+
+╭────────────────────────────────────────────────────────────────────────╮
+│                  ANALIZADOR DE REDES MEDIANTE GRAFOS                   │
+│               Proyecto 4 · Teoría Computacional · UPSLP                │
+╰────────────────────────────────────────────────────────────────────────╯
+  Red:   ✔ red_ejemplo.txt (7 equipos, 7 conexiones)
+  Pings: ✔ procesados · 1 en Falla (SW1)
+
+  📂 ARCHIVO
+     [1]  Cargar red desde archivo
+
+  🌐 ANÁLISIS DEL GRAFO
+     [2]  Ver equipos y conexiones (V, E)
+     [3]  ¿Hay camino entre dos equipos? (BFS)
+     [4]  Camino más rápido (Dijkstra)
+     [5]  Grados y equipos aislados
+     [6]  Ciclos y puntos críticos
+
+  📡 PINGS Y FALLAS
+     [7]  Procesar pings (¿quién está en Falla?)
+     [8]  Simular fallas
+
+  🤖 TEORÍA
+     [9]  AFN, subconjuntos y tabla del AFD
+    [10]  Derivación con la gramática
+
+  🖼  IMÁGENES
+    [11]  Generar imágenes (Grafo, AFN, AFD, AP)
+
+     [0]  🚪 Salir
+  ────────────────────────────────────────────────────────────────────────
+  ➜ Escribe el número de una opción y da Enter: 
+┌────────────────────────────────────────────────────────────────────────
+│ 🤖  9. AFN → AFD (CONSTRUCCIÓN POR SUBCONJUNTOS)
+└────────────────────────────────────────────────────────────────────────
+  ℹ  Σ = {o, t}: o = OK, t = TIMEOUT. Se acepta (Falla) si termina en 'tt'.
+
+▸ AFN  N = (Q, Σ, δ, q0, F)
+  Q: {q0, q1, q2}
+  Σ: {o, t}
+  q0: q0
+  F: {q2}
+  ┌────┬──────┬─────────┐
+  │ δ  │ o    │ t       │
+  ├────┼──────┼─────────┤
+  │ q0 │ {q0} │ {q0,q1} │
+  │ q1 │ ∅    │ {q2}    │
+  │ q2 │ ∅    │ ∅       │
+  └────┴──────┴─────────┘
+
+▸ Procedimiento de subconjuntos
+  Estado inicial del AFD: A = {q0}
+
+  Procesando A = {q0}:
+    δ'(A, o) = δ(q0,o)={q0} = {q0} = A
+    δ'(A, t) = δ(q0,t)={q0,q1} = {q0,q1} = B  ← conjunto NUEVO
+
+  Procesando B = {q0,q1}:
+    δ'(B, o) = δ(q0,o)={q0} ∪ δ(q1,o)=∅ = {q0} = A
+    δ'(B, t) = δ(q0,t)={q0,q1} ∪ δ(q1,t)={q2} = {q0,q1,q2} = C  ← conjunto NUEVO
+
+  Procesando C = {q0,q1,q2}:
+    δ'(C, o) = δ(q0,o)={q0} ∪ δ(q1,o)=∅ ∪ δ(q2,o)=∅ = {q0} = A
+    δ'(C, t) = δ(q0,t)={q0,q1} ∪ δ(q1,t)={q2} ∪ δ(q2,t)=∅ = {q0,q1,q2} = C
+
+  Estados finales del AFD (contienen q2): C
+
+▸ Tabla del AFD   (→ inicial, * final)
+  ┌────────┬──────────────────┬───┬───┐
+  │ Estado │ Conjunto del AFN │ o │ t │
+  ├────────┼──────────────────┼───┼───┤
+  │ → A    │ {q0}             │ A │ B │
+  │   B    │ {q0,q1}          │ A │ C │
+  │  *C    │ {q0,q1,q2}       │ A │ C │
+  └────────┴──────────────────┴───┴───┘
+
+  ✔  AFN y AFD son equivalentes: aceptan lo mismo en las 511 cadenas de longitud 0 a 8
+
+▸ Ejemplos
+
+  Cadena 'ootott'
+    AFN (todos los caminos a la vez):
+      inicio: {q0}
+      lee 'o': {q0} -> {q0}
+      lee 'o': {q0} -> {q0}
+      lee 't': {q0} -> {q0,q1}
+      lee 'o': {q0,q1} -> {q0}
+      lee 't': {q0} -> {q0,q1}
+      lee 't': {q0,q1} -> {q0,q1,q2}
+      → acepta (acepta si el conjunto final contiene q2)
+    AFD: A -o-> A -o-> A -t-> B -o-> A -t-> B -t-> C  →  acepta → Falla
+
+  Cadena 'ttto'
+    AFN (todos los caminos a la vez):
+      inicio: {q0}
+      lee 't': {q0} -> {q0,q1}
+      lee 't': {q0,q1} -> {q0,q1,q2}
+      lee 't': {q0,q1,q2} -> {q0,q1,q2}
+      lee 'o': {q0,q1,q2} -> {q0}
+      → rechaza (acepta si el conjunto final contiene q2)
+    AFD: A -t-> B -t-> C -t-> C -o-> A  →  rechaza → Activo
+
+  ➜ Prueba tu propia cadena de o/t (ej. oottt, Enter = terminar): 
+  Cadena 'oottt'
+    AFN (todos los caminos a la vez):
+      inicio: {q0}
+      lee 'o': {q0} -> {q0}
+      lee 'o': {q0} -> {q0}
+      lee 't': {q0} -> {q0,q1}
+      lee 't': {q0,q1} -> {q0,q1,q2}
+      lee 't': {q0,q1,q2} -> {q0,q1,q2}
+      → acepta (acepta si el conjunto final contiene q2)
+    AFD: A -o-> A -o-> A -t-> B -t-> C -t-> C  →  acepta → Falla
+
+  ➜ Prueba tu propia cadena de o/t (ej. oottt, Enter = terminar): 
+╭────────────────────────────────────────────────────────────────────────╮
+│                  ANALIZADOR DE REDES MEDIANTE GRAFOS                   │
+│               Proyecto 4 · Teoría Computacional · UPSLP                │
+╰────────────────────────────────────────────────────────────────────────╯
+  Red:   ✔ red_ejemplo.txt (7 equipos, 7 conexiones)
+  Pings: ✔ procesados · 1 en Falla (SW1)
+
+  📂 ARCHIVO
+     [1]  Cargar red desde archivo
+
+  🌐 ANÁLISIS DEL GRAFO
+     [2]  Ver equipos y conexiones (V, E)
+     [3]  ¿Hay camino entre dos equipos? (BFS)
+     [4]  Camino más rápido (Dijkstra)
+     [5]  Grados y equipos aislados
+     [6]  Ciclos y puntos críticos
+
+  📡 PINGS Y FALLAS
+     [7]  Procesar pings (¿quién está en Falla?)
+     [8]  Simular fallas
+
+  🤖 TEORÍA
+     [9]  AFN, subconjuntos y tabla del AFD
+    [10]  Derivación con la gramática
+
+  🖼  IMÁGENES
+    [11]  Generar imágenes (Grafo, AFN, AFD, AP)
+
+     [0]  🚪 Salir
+  ────────────────────────────────────────────────────────────────────────
+  ➜ Escribe el número de una opción y da Enter: 
+┌────────────────────────────────────────────────────────────────────────
+│ 🌳  10. DERIVACIÓN MÁS A LA IZQUIERDA
+└────────────────────────────────────────────────────────────────────────
+  ℹ  En cada paso se reemplaza el NO terminal de más a la izquierda.
+
+▸ Gramática G = (V, Σ, P, S)
+    S → RED { L }
+    L → E L | E
+    E → T id P ; | T id P { L } | ENLACE id id : n ;
+    P → : n | ε
+    T → ROUTER | SWITCH | PC | SERVER | DB
+
+▸ Derivación
+     S
+   1 ⇒ RED { L }   [S → RED { L }]
+   2 ⇒ RED { E L }   [L → E L]
+   3 ⇒ RED { T R1 P { L } L }   [E → T id P { L }]
+   4 ⇒ RED { ROUTER R1 P { L } L }   [T → ROUTER]
+   5 ⇒ RED { ROUTER R1 { L } L }   [P → ε]
+   6 ⇒ RED { ROUTER R1 { E L } L }   [L → E L]
+   7 ⇒ RED { ROUTER R1 { T SW1 P { L } L } L }   [E → T id P { L }]
+   8 ⇒ RED { ROUTER R1 { SWITCH SW1 P { L } L } L }   [T → SWITCH]
+   9 ⇒ RED { ROUTER R1 { SWITCH SW1 : 5 { L } L } L }   [P → : n]
+  10 ⇒ RED { ROUTER R1 { SWITCH SW1 : 5 { E L } L } L }   [L → E L]
+  11 ⇒ RED { ROUTER R1 { SWITCH SW1 : 5 { T PC1 P ; L } L } L }   [E → T id P ;]
+  12 ⇒ RED { ROUTER R1 { SWITCH SW1 : 5 { PC PC1 P ; L } L } L }   [T → PC]
+  13 ⇒ RED { ROUTER R1 { SWITCH SW1 : 5 { PC PC1 : 2 ; L } L } L }   [P → : n]
+  14 ⇒ RED { ROUTER R1 { SWITCH SW1 : 5 { PC PC1 : 2 ; E } L } L }   [L → E]
+  15 ⇒ RED { ROUTER R1 { SWITCH SW1 : 5 { PC PC1 : 2 ; T PC2 P ; } L } L }   [E → T id P ;]
+  16 ⇒ RED { ROUTER R1 { SWITCH SW1 : 5 { PC PC1 : 2 ; PC PC2 P ; } L } L }   [T → PC]
+  17 ⇒ RED { ROUTER R1 { SWITCH SW1 : 5 { PC PC1 : 2 ; PC PC2 : 2 ; } L } L }   [P → : n]
+  18 ⇒ RED { ROUTER R1 { SWITCH SW1 : 5 { PC PC1 : 2 ; PC PC2 : 2 ; } E } L }   [L → E]
+  19 ⇒ RED { ROUTER R1 { SWITCH SW1 : 5 { PC PC1 : 2 ; PC PC2 : 2 ; } T SW2 P { L } } L }   [E → T id P { L }]
+  20 ⇒ RED { ROUTER R1 { SWITCH SW1 : 5 { PC PC1 : 2 ; PC PC2 : 2 ; } SWITCH SW2 P { L } } L }   [T → SWITCH]
+  21 ⇒ RED { ROUTER R1 { SWITCH SW1 : 5 { PC PC1 : 2 ; PC PC2 : 2 ; } SWITCH SW2 : 4 { L } } L }   [P → : n]
+  22 ⇒ RED { ROUTER R1 { SWITCH SW1 : 5 { PC PC1 : 2 ; PC PC2 : 2 ; } SWITCH SW2 : 4 { E } } L }   [L → E]
+  23 ⇒ RED { ROUTER R1 { SWITCH SW1 : 5 { PC PC1 : 2 ; PC PC2 : 2 ; } SWITCH SW2 : 4 { T SRV1 P ; } } L }   [E → T id P ;]
+  24 ⇒ RED { ROUTER R1 { SWITCH SW1 : 5 { PC PC1 : 2 ; PC PC2 : 2 ; } SWITCH SW2 : 4 { SERVER SRV1 P ; } } L }   [T → SERVER]
+  25 ⇒ RED { ROUTER R1 { SWITCH SW1 : 5 { PC PC1 : 2 ; PC PC2 : 2 ; } SWITCH SW2 : 4 { SERVER SRV1 : 1 ; } } L }   [P → : n]
+  26 ⇒ RED { ROUTER R1 { SWITCH SW1 : 5 { PC PC1 : 2 ; PC PC2 : 2 ; } SWITCH SW2 : 4 { SERVER SRV1 : 1 ; } } E L }   [L → E L]
+  27 ⇒ RED { ROUTER R1 { SWITCH SW1 : 5 { PC PC1 : 2 ; PC PC2 : 2 ; } SWITCH SW2 : 4 { SERVER SRV1 : 1 ; } } T DB1 P ; L }   [E → T id P ;]
+  28 ⇒ RED { ROUTER R1 { SWITCH SW1 : 5 { PC PC1 : 2 ; PC PC2 : 2 ; } SWITCH SW2 : 4 { SERVER SRV1 : 1 ; } } DB DB1 P ; L }   [T → DB]
+  29 ⇒ RED { ROUTER R1 { SWITCH SW1 : 5 { PC PC1 : 2 ; PC PC2 : 2 ; } SWITCH SW2 : 4 { SERVER SRV1 : 1 ; } } DB DB1 ; L }   [P → ε]
+  30 ⇒ RED { ROUTER R1 { SWITCH SW1 : 5 { PC PC1 : 2 ; PC PC2 : 2 ; } SWITCH SW2 : 4 { SERVER SRV1 : 1 ; } } DB DB1 ; E L }   [L → E L]
+  31 ⇒ RED { ROUTER R1 { SWITCH SW1 : 5 { PC PC1 : 2 ; PC PC2 : 2 ; } SWITCH SW2 : 4 { SERVER SRV1 : 1 ; } } DB DB1 ; ENLACE PC2 DB1 : 3 ; L }   [E → ENLACE id id : n ;]
+  32 ⇒ RED { ROUTER R1 { SWITCH SW1 : 5 { PC PC1 : 2 ; PC PC2 : 2 ; } SWITCH SW2 : 4 { SERVER SRV1 : 1 ; } } DB DB1 ; ENLACE PC2 DB1 : 3 ; E }   [L → E]
+  33 ⇒ RED { ROUTER R1 { SWITCH SW1 : 5 { PC PC1 : 2 ; PC PC2 : 2 ; } SWITCH SW2 : 4 { SERVER SRV1 : 1 ; } } DB DB1 ; ENLACE PC2 DB1 : 3 ; ENLACE SRV1 DB1 : 2 ; }   [E → ENLACE id id : n ;]
+
+  ✔  Total: 33 pasos de derivación
+
+╭────────────────────────────────────────────────────────────────────────╮
+│                  ANALIZADOR DE REDES MEDIANTE GRAFOS                   │
+│               Proyecto 4 · Teoría Computacional · UPSLP                │
+╰────────────────────────────────────────────────────────────────────────╯
+  Red:   ✔ red_ejemplo.txt (7 equipos, 7 conexiones)
+  Pings: ✔ procesados · 1 en Falla (SW1)
+
+  📂 ARCHIVO
+     [1]  Cargar red desde archivo
+
+  🌐 ANÁLISIS DEL GRAFO
+     [2]  Ver equipos y conexiones (V, E)
+     [3]  ¿Hay camino entre dos equipos? (BFS)
+     [4]  Camino más rápido (Dijkstra)
+     [5]  Grados y equipos aislados
+     [6]  Ciclos y puntos críticos
+
+  📡 PINGS Y FALLAS
+     [7]  Procesar pings (¿quién está en Falla?)
+     [8]  Simular fallas
+
+  🤖 TEORÍA
+     [9]  AFN, subconjuntos y tabla del AFD
+    [10]  Derivación con la gramática
+
+  🖼  IMÁGENES
+    [11]  Generar imágenes (Grafo, AFN, AFD, AP)
+
+     [0]  🚪 Salir
+  ────────────────────────────────────────────────────────────────────────
+  ➜ Escribe el número de una opción y da Enter: 
+┌────────────────────────────────────────────────────────────────────────
+│ 🖼   11. GENERAR IMÁGENES
+└────────────────────────────────────────────────────────────────────────
+  ✔  Generado: C:\Users\crist\Downloads\proyecto_TC\Equipo_Proyecto4\03_Automatas\AFN.png
+  ✔  Generado: C:\Users\crist\Downloads\proyecto_TC\Equipo_Proyecto4\03_Automatas\AFD.png
+  ✔  Generado: C:\Users\crist\Downloads\proyecto_TC\Equipo_Proyecto4\03_Automatas\AP.png
+  ✔  Generado: C:\Users\crist\Downloads\proyecto_TC\Equipo_Proyecto4\04_Grafos\Grafo.png
+
+╭────────────────────────────────────────────────────────────────────────╮
+│                  ANALIZADOR DE REDES MEDIANTE GRAFOS                   │
+│               Proyecto 4 · Teoría Computacional · UPSLP                │
+╰────────────────────────────────────────────────────────────────────────╯
+  Red:   ✔ red_ejemplo.txt (7 equipos, 7 conexiones)
+  Pings: ✔ procesados · 1 en Falla (SW1)
+
+  📂 ARCHIVO
+     [1]  Cargar red desde archivo
+
+  🌐 ANÁLISIS DEL GRAFO
+     [2]  Ver equipos y conexiones (V, E)
+     [3]  ¿Hay camino entre dos equipos? (BFS)
+     [4]  Camino más rápido (Dijkstra)
+     [5]  Grados y equipos aislados
+     [6]  Ciclos y puntos críticos
+
+  📡 PINGS Y FALLAS
+     [7]  Procesar pings (¿quién está en Falla?)
+     [8]  Simular fallas
+
+  🤖 TEORÍA
+     [9]  AFN, subconjuntos y tabla del AFD
+    [10]  Derivación con la gramática
+
+  🖼  IMÁGENES
+    [11]  Generar imágenes (Grafo, AFN, AFD, AP)
+
+     [0]  🚪 Salir
+  ────────────────────────────────────────────────────────────────────────
+  ➜ Escribe el número de una opción y da Enter:   👋 Hasta luego.

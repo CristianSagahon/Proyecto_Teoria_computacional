@@ -1,0 +1,10 @@
+# Red de ejemplo del Proyecto 4
+RED {
+  ROUTER R1 {
+    SWITCH SW1 : 5 { PC PC1 : 2 ; PC PC2 : 2 ; }
+    SWITCH SW2 : 4 { SERVER SRV1 : 1 ; }
+  }
+  DB DB1 ;
+  ENLACE PC2 DB1 : 3 ;   # enlace extra
+  ENLACE SRV1 DB1 : 2 ;
+}

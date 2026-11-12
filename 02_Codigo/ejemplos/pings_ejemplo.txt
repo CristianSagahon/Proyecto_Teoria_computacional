@@ -1,0 +1,18 @@
+# Resultados de ping (una línea por ping, en orden de tiempo)
+R1 OK
+SW1 OK
+PC1 OK
+PC2 TIMEOUT
+SW2 OK
+SRV1 OK
+DB1 OK
+SW1 OK
+PC2 TIMEOUT
+SW1 TIMEOUT
+PC1 TIMEOUT
+SRV1 TIMEOUT
+PC2 OK
+SW1 TIMEOUT
+PC1 OK
+DB1 OK
+R1 OK

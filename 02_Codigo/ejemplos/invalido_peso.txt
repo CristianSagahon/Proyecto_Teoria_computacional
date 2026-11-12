@@ -1,0 +1,5 @@
+RED {
+  ROUTER R1 {
+    SWITCH SW1 : 0 { PC PC1 : 05 ; }
+  }
+}

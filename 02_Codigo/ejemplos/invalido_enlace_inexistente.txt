@@ -1,0 +1,4 @@
+RED {
+  ROUTER R1 { PC PC1 : 2 ; }
+  ENLACE PC1 PC9 : 3 ;
+}

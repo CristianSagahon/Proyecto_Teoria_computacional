@@ -1,0 +1,3 @@
+# Solo se usa para DIBUJAR las imágenes (opción 11).
+# Los algoritmos, autómatas y el parser están hechos a mano.
+matplotlib>=3.5

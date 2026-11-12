@@ -1,0 +1,6 @@
+RED {
+  ROUTER R1 {
+    PC PC1 : 2 ;
+    PC PC1 : 3 ;
+  }
+}
